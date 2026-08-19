@@ -317,6 +317,7 @@ main.fresh .hgrid>*:nth-child(n+5){animation-delay:180ms}
 <div id="scrim"></div>
 <wick-assistant></wick-assistant>
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="claude-client.js"></script>
 <script src="mcc-data.js"></script>
 <script src="mcc-core.js"></script>
 <script src="mcc-later.js"></script>
@@ -339,7 +340,7 @@ const SCREENS = [
 const q = new URLSearchParams(location.search);
 const S = { screen:q.get('screen') || 'home', brand:q.get('brand') || 'ltw', id:q.get('id') || 'c-101',
   chan:q.get('ch') || 'adwords', sheet:q.get('sheet') || '', state:q.get('state') || '', ch:q.get('fch') || '', type:q.get('ftype') || '' };
-const SQ_GOAL = BRANDS.sq.goal;
+BRANDS.sq._staticGoal = BRANDS.sq.goal;
 const app = document.getElementById('app'), scrim = document.getElementById('scrim');
 const RENDER = { home:screenHome, campaigns:screenCampaigns, detail:screenDetail, links:screenLinks,
   builder:screenBuilder, channel:screenChannel, present:screenPresent, calendar:screenCalendar, connections:screenConnections, revenue:screenRevenue };
@@ -360,7 +361,7 @@ function sync() {
   history.replaceState(null, '', '?' + p);
 }
 function render() {
-  BRANDS.sq.goal = S.state === 'nogoal' ? null : SQ_GOAL;
+  BRANDS.sq.goal = S.state === 'nogoal' ? null : BRANDS.sq._staticGoal;
   const present = S.screen === 'present';
   document.querySelector('.top').style.display = present ? 'none' : '';
   document.querySelector('.qa').style.display = present ? 'none' : '';

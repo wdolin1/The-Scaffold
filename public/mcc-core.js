@@ -41,10 +41,34 @@ function dial(b, zero) {
       : `<div class="dialpace">No goal in Pipedrive</div>`}
   </div>`;
 }
+/* ── Pipedrive: live leads-started-vs-goal, replacing the sample numbers once
+   fetched. BRANDS.sq._staticGoal is the "real" goal to fall back to once the
+   ?state=nogoal demo toggle (see the page's inline script) is turned back off,
+   so a live value has to update that alongside BRANDS.sq.goal itself. ────── */
+let PIPEDRIVE_LIVE = { status: 'idle', error: null };
+async function loadPipedriveLive() {
+  if (PIPEDRIVE_LIVE.status === 'loading') return;
+  PIPEDRIVE_LIVE = { status: 'loading', error: null };
+  try {
+    const res = await fetch('/api/pipedrive/pace');
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `Pipedrive request failed (${res.status})`);
+    BRANDS.ltw.goal = body.ltw.target; BRANDS.ltw.leads = body.ltw.actual; BRANDS.ltw.goalSynced = 'just now';
+    BRANDS.sq.goal = body.sq.target; BRANDS.sq._staticGoal = body.sq.target; BRANDS.sq.leads = body.sq.actual; BRANDS.sq.goalSynced = 'just now';
+    PIPEDRIVE_LIVE = { status: 'ready', error: null };
+  } catch (e) {
+    PIPEDRIVE_LIVE = { status: 'error', error: e.message };
+  }
+  rerenderMCC();
+}
 function tilePace(s, zero) {
   const brands = s.brand === 'both' ? ['ltw','sq'] : [s.brand];
+  if (PIPEDRIVE_LIVE.status === 'idle') loadPipedriveLive();
+  const pill = PIPEDRIVE_LIVE.status === 'ready' ? '<span class="pill ok">Live</span>'
+    : PIPEDRIVE_LIVE.status === 'loading' ? '<span class="pill mute">Live · loading…</span>'
+    : PIPEDRIVE_LIVE.status === 'error' ? `<span class="pill bad" title="${esc(PIPEDRIVE_LIVE.error)}">Live call failed</span>` : '';
   return `<section class="tile t-pace">
-    <div class="tilehead"><h2 class="h2">Leads started vs. goal</h2><span class="lbl">Pipedrive · ${esc(HOME_METRICS.monthLabel)}</span></div>
+    <div class="tilehead"><h2 class="h2">Leads started vs. goal</h2><span class="lbl">Pipedrive · ${esc(HOME_METRICS.monthLabel)}</span>${pill}</div>
     <div class="dials">${brands.map(b => dial(b, zero)).join('')}</div>
     <div class="pacefoot"><span class="lbl">${Math.round(HOME_METRICS.monthElapsed * 100)}% of the month gone · ${HOME_METRICS.daysLeft} days left</span></div>
   </section>`;

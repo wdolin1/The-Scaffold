@@ -155,7 +155,7 @@ function wireBuilder(root, S, rerender) {
     let piece = null;
     if (window.claude?.complete) {
       try {
-        const out = await window.claude.complete({ max_tokens:900,
+        const resp = await window.claude.complete({ max_tokens:900,
           system:`You write ${kit.name} collateral, working strictly from their brand guide.
 Positioning: ${kit.position}. Tagline: ${kit.tagline}.${kit.owner ? ' Owner: ' + kit.owner + '.' : ''}
 Voice: ${kit.voice}
@@ -165,9 +165,10 @@ Headlines are uppercase display type, so write them as short clipped sentences t
 Never use em dashes. No emoji. Do not borrow the other brand's language, colors or imagery.
 Reply with JSON only: {"title":"short internal label","eyebrow":"short kicker","subject":"headline","hi":"one word from the headline to highlight","preheader":"one short line","greeting":${kit.opener ? '"' + kit.opener + '"' : 'null'},"body":["paragraph","paragraph"],"cta":"primary call to action","cta2":${kit.ctaStyle === 'buttons' ? '"secondary action or null"' : 'null'}}`,
           messages:[{ role:'user', content:`${refine && window.BUILDER_PIECE ? 'Revise this piece: ' + JSON.stringify(window.BUILDER_PIECE) + '\n\nApply this note: ' : ''}${brief}${mod ? '\n\nBuild it around the ' + mod + ' module.' : ''}\n\nFormat: ${kind}.` }] });
+        const out = window.claudeTextOf(resp);
         const j = JSON.parse(out.slice(out.indexOf('{'), out.lastIndexOf('}') + 1));
         piece = { id:'g-' + Date.now().toString(36), brand, kind, date:new Date().toISOString().slice(0,10), by:'Builder', campaign:null, ...j };
-      } catch (e) { status.textContent = 'That call failed. Nothing written.'; return; }
+      } catch (e) { status.textContent = e.message || 'That call failed. Nothing written.'; return; }
     } else {
       const base = gread().find(p => p.brand === brand) || SEED_GEN[0];
       piece = { ...base, id:'g-' + Date.now().toString(36), kind, date:new Date().toISOString().slice(0,10), by:'Builder', campaign:null, title:brief.slice(0, 48) };

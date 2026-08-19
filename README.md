@@ -167,3 +167,4 @@ Wick's room reads `?from=mcc` / `?from=docket` to decide where its exit goes.
 - Quick Add saves on three fields; everything else is optional and fillable later.
 - CSV import validates per row, previews, and skips bad rows rather than failing the file.
 - Reduced motion: all entry animations and the page dissolve turn off.
+ 

@@ -1,0 +1,46 @@
+/* parlor.css, the Parlor language, lifted from the portfolio's theme so the
+   Scaffold hub and Wick read as the same building. Tokens match themes.jsx. */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;1,400&family=Karla:wght@400;500;600&display=swap");
+:root{--bg:#1a120b;--bg-soft:#221710;--bg-deep:#0f0a06;--bg-warm:#2a1c11;--ink:#ecd9b2;--ink-soft:#c9b48a;--ink-mute:#9c8a68;--ink-dim:#8b7a5c;--amber:#d99a3d;--amber-lit:#f5cd6a;--amber-glow:rgba(217,154,61,.32);--sage:#8e9462;--rule:rgba(236,217,178,.16);--rule-strong:rgba(236,217,178,.32);--card:#241810;--card-edge:rgba(236,217,178,.10);--shadow:0 30px 60px -30px rgba(0,0,0,.85),0 2px 6px rgba(0,0,0,.6);--display:"Cormorant Garamond",Georgia,serif;--body:"Spectral",Georgia,serif;--ui:"Karla","Spectral",system-ui,sans-serif}
+*{box-sizing:border-box}
+html{overflow-x:hidden}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--amber-lit)}
+::selection{background:var(--amber);color:#0d0905}
+.p-grain::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.55  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");background-size:220px 220px;mix-blend-mode:overlay;opacity:.10}
+.p-eyebrow{font-family:var(--ui);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);font-weight:500}
+.p-label{font-family:var(--ui);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-mute)}
+.p-glow{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--amber-glow) 0%,rgba(217,154,61,.06) 40%,transparent 70%);mix-blend-mode:screen;animation:p-breathe 7s ease-in-out infinite}
+@keyframes p-breathe{0%,100%{opacity:1;filter:brightness(1)}45%{opacity:.95}48%{opacity:.78;filter:brightness(.94)}52%{opacity:.92}70%{opacity:.88;filter:brightness(.98)}}
+@keyframes p-flicker{0%,100%{opacity:1;transform:scale(1)}45%{opacity:.95;transform:scale(1.02)}48%{opacity:.78;transform:scale(.99)}52%{opacity:.92;transform:scale(1.01)}70%{opacity:.88}}
+@keyframes p-fadeup{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.p-fadeup{animation:p-fadeup 1.3s cubic-bezier(.2,.7,.3,1) both}
+.p-d1{animation-delay:.1s}.p-d2{animation-delay:.3s}.p-d3{animation-delay:.5s}.p-d4{animation-delay:.7s}
+.p-btn{font-family:var(--ui);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#1a120b;background:var(--ink);border:1px solid var(--ink);padding:15px 26px;min-height:44px;cursor:pointer;transition:background .25s,box-shadow .25s}
+.p-btn:hover{background:var(--amber-lit);border-color:var(--amber-lit);box-shadow:0 0 26px var(--amber-glow)}
+.p-btn.ghost{background:none;color:var(--ink-mute);border-color:var(--rule-strong)}
+.p-btn.ghost:hover{color:var(--ink);box-shadow:none}
+.p-field{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--rule);color:var(--ink);font-family:var(--body);font-size:16px;padding:15px 16px;min-height:48px;outline:none;transition:border-color .25s,box-shadow .25s}
+.p-field:focus{border-color:var(--amber);box-shadow:0 0 22px -4px var(--amber-glow)}
+.p-field::placeholder{color:var(--ink-dim)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+html.lit{--bg:#e7e0d1;--bg-soft:#f0eade;--bg-deep:#d6cdb9;--bg-warm:#f6f1e5;
+  --ink:#2a2118;--ink-soft:#403528;--ink-mute:#574c3d;--ink-dim:#6b5e4c;
+  --amber:#7d5c1d;--amber-lit:#6d5019;--amber-glow:rgba(143,106,34,.20);
+  --sage:#6f7548;--rule:rgba(42,33,24,.17);--rule-strong:rgba(42,33,24,.32);
+  --card:#efe9dc;--card-edge:rgba(42,33,24,.13);
+  --shadow:0 24px 50px -30px rgba(58,44,24,.4),0 2px 6px rgba(58,44,24,.14)}
+html.lit body{background:var(--bg);color:var(--ink)}
+html.lit .p-grain::before{opacity:.055;mix-blend-mode:multiply}
+html.lit .p-btn{color:#f6f1e5;background:var(--ink);border-color:var(--ink)}
+html.lit .p-btn:hover{background:var(--amber);border-color:var(--amber);box-shadow:0 0 22px rgba(143,106,34,.28)}
+html.lit .p-btn.ghost{background:none;color:var(--ink-mute)}
+html.lit .p-btn.ghost:hover{color:var(--ink)}
+html.lit .p-field{background:rgba(255,255,255,.5);border-color:var(--rule-strong);color:var(--ink)}
+html.lit .p-field:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(143,106,34,.14)}
+html.lit wick-assistant{--w-panel:243,238,226;--w-ink:#2a2118;--w-soft:#403528;--w-mute:#574c3d;--w-dim:#6b5e4c;
+  --w-amber:#8f6a22;--w-lit:#b48b33;--w-rule:rgba(42,33,24,.16)}
+/* the switch plate reads as dark hardware against plaster */
+html.lit mode-switch{--sw-plate-hi:#cfc4ad;--sw-plate-lo:#b7a98e;--sw-edge:rgba(42,33,24,.3);--sw-inner:rgba(255,255,255,.5);--sw-key-hi:#5c5142;--sw-key-lo:#403528;--sw-key-on-hi:#7d5c1d;--sw-key-on-lo:#5c4415;--sw-lbl:#6b5e4c}

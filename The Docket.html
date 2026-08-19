@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Scaffold · The Docket</title>
+<link rel="stylesheet" href="mcc.css">
+<script>try{if(localStorage.getItem('cg_mode')==='lit')document.documentElement.classList.add('lit')}catch(e){}</script>
+<style>
+html.lit .markimg{filter:brightness(.2) saturate(.5)}
+html.lit body{background:linear-gradient(180deg,#f4efe3,var(--bg) 320px)}
+html.lit .top{background:rgba(243,238,226,.95)}
+html{overflow-x:hidden}
+body{min-height:100vh;background:linear-gradient(180deg,#1e1509,var(--bg) 320px)}
+.top{position:sticky;top:0;z-index:40;background:rgba(26,18,11,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topin{display:flex;align-items:center;gap:12px;padding:14px 20px;flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:11px;flex:none;min-width:0}
+.mark img{width:30px;height:auto;opacity:.92;flex:none}
+.mark b{font-family:var(--display);font-size:19px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.mark span{display:block;color:var(--accent);font-family:var(--ui);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--text-4);margin-top:2px}
+.topnav{display:flex;gap:0;margin-left:auto}
+.topnav a{font-family:var(--ui);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-3);padding:12px 14px;min-height:44px;display:flex;align-items:center;white-space:nowrap}
+.topnav a:hover{color:var(--text)}
+main{padding:22px 20px 120px;max-width:1420px;margin:0 auto}
+.filterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.filterbar .lbl{margin-right:2px}
+.tally{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap}
+.tally span{font-family:var(--ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-4)}
+.tally b{font-family:var(--display);font-size:15px;color:var(--text);font-weight:500;margin-left:7px;letter-spacing:0}
+.tally b.hot{color:var(--accent)}
+.dot.me{background:var(--text-2)}
+/* ── four quadrants: where a task sits is what it is worth ── */
+.board{display:grid;grid-template-columns:1fr;gap:0;margin-top:4px}
+.col{padding:22px 0 10px;border-bottom:1px solid var(--line)}
+.colhead{padding-bottom:14px}
+.colline{display:flex;align-items:baseline;gap:11px}
+.colhead h2{font-family:var(--display);font-size:23px;font-weight:500;letter-spacing:-.01em;margin:0}
+.colhead .n{font-family:var(--ui);font-size:10px;letter-spacing:.2em;color:var(--text-4)}
+.colhead .axis{display:block;margin-top:5px;font-family:var(--ui);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-4)}
+.colhead .hint{margin-left:auto;font-family:var(--ui);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);opacity:0;transition:opacity .3s}
+.col.over .colhead .hint{opacity:1}
+/* the first quadrant runs a touch warmer, everything else stays quiet */
+.col.q1 h2{color:var(--text)}
+.col.q1 .rail{background:var(--accent)}
+.rail{height:1px;background:var(--line-2);margin-bottom:2px}
+.col.q4 .rail{background:var(--line)}
+.list{display:flex;flex-direction:column;min-height:70px;transition:background .25s}
+.col.over .list{background:rgba(217,154,61,.05);box-shadow:inset 0 0 0 1px rgba(217,154,61,.22)}
+.task{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;gap:11px;padding:13px 2px;border-top:1px solid var(--line);cursor:grab;transition:padding-left .3s cubic-bezier(.2,.7,.3,1),opacity .2s}
+.task:first-child{border-top:none}
+.task:hover{padding-left:9px}
+.task.dragging{opacity:.32}
+.gap{height:1px;background:var(--accent);box-shadow:0 0 10px rgba(217,154,61,.7);margin:-1px 0}
+.task .dot{margin-top:6px}
+.task .t{font-family:var(--sans);font-size:15px;line-height:1.45;color:var(--text-2);text-wrap:pretty}
+.col.q1 .task .t{color:var(--text)}
+.col.q4 .task .t{color:var(--text-3)}
+.task .when{font-family:var(--ui);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-4);white-space:nowrap}
+.task .when.late{color:var(--danger)}
+.task .when.soon{color:var(--warn)}
+.add{display:flex;align-items:center;gap:9px;padding:12px 2px;border-top:1px solid var(--line)}
+.add input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-family:var(--sans);font-size:14.5px;padding:4px 0;min-height:30px}
+.add input::placeholder{color:var(--text-4)}
+.add .pick{display:flex;gap:6px;flex:none}
+.add .pick button{width:22px;height:22px;display:grid;place-items:center;background:none;border:1px solid transparent;cursor:pointer;padding:0}
+.add .pick button[aria-pressed="true"]{border-color:var(--line-2)}
+.add .pick .dot{width:7px;height:7px}
+.empty{font-family:var(--sans);font-size:13.5px;color:var(--text-4);padding:16px 2px}
+/* ── cleared ── */
+.cleared{margin-top:34px;padding-top:22px;border-top:1px solid var(--line)}
+.cleared .between{align-items:baseline}
+.cleared h2{font-family:var(--display);font-size:20px;font-weight:500;margin:0}
+.clist{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:14px}
+.clist button{display:flex;align-items:baseline;gap:9px;background:none;border:none;cursor:pointer;padding:6px 0;text-align:left}
+.clist .t{font-family:var(--sans);font-size:13.5px;color:var(--text-4);text-decoration:line-through;text-decoration-color:var(--line-2)}
+.clist button:hover .t{color:var(--text-2)}
+.legend{display:flex;gap:24px;flex-wrap:wrap;margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
+.legend span{font-family:var(--ui);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-4)}
+@media(min-width:760px){
+  .topin{padding:16px 30px}.mark span{display:block}
+  main{padding:26px 30px 90px}
+  .board{grid-template-columns:1fr 1fr;gap:0 40px}
+  .col{padding-top:26px}
+  .clist{gap:12px 40px}
+}
+@media(min-width:1180px){
+  main{padding:30px 40px 90px}
+  .board{grid-template-columns:repeat(4,minmax(0,1fr));gap:0 40px}
+  .col{border-bottom:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topin">
+    <div class="mark">
+      <img class="markimg" src="assets/antler.png" alt="">
+      <div><b>The Scaffold</b><span>The Docket</span></div>
+    </div>
+    <nav class="topnav">
+      <a href="Marketing Command Center.html">Command Center</a>
+      <a href="Wick.html?from=docket">Wick</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <div class="filterbar">
+    <span class="lbl">Showing</span>
+    <div class="seg" id="filter">
+      <button data-b="ltw" aria-pressed="true"><span class="dot ltw"></span>LTW</button>
+      <button data-b="sq" aria-pressed="true"><span class="dot sq"></span>Squeeky</button>
+      <button data-b="me" aria-pressed="true"><span class="dot me"></span>Personal</button>
+    </div>
+    <div class="tally" id="tally"></div>
+  </div>
+  <div class="board" id="board"></div>
+  <section class="cleared">
+    <div class="between"><h2>Cleared</h2><span class="lbl" id="cn"></span></div>
+    <div class="clist" id="clist"></div>
+  </section>
+  <div class="legend">
+    <span>Drag between columns to change what it is worth</span>
+    <span>Drag up or down to rank it</span>
+    <span>Click a line to clear it</span>
+  </div>
+</main>
+<script>
+const KEY = 'cg_docket';
+const ymd = s => { const [y, m, d] = String(s).split('-'); return new Date(+y, +m - 1, +d); };
+const TODAY = ymd('2026-08-17');
+/* Placement is the priority: the column a task sits in is the decision. */
+const QUADS = [
+  ['q1', 'Now',        'Urgent and important'],
+  ['q2', 'Chores',      'Urgent, but small'],
+  ['q3', 'Plan it',    'Important, not urgent'],
+  ['q4', 'Someday',    'Neither'],
+];
+const BR = { ltw:'LTW', sq:'Squeeky', me:'Personal' };
+const SEED = [
+  { id:'t1', brand:'ltw', q:'q1', t:'Shoot both Rockingham restorations before the scaffolding comes down', due:'2026-08-19', made:'2026-08-04' },
+  { id:'t2', brand:'sq', q:'q1', t:'Pull the carpenter bee season list and price the mail drop', due:'2026-08-21', made:'2026-08-09' },
+  { id:'t3', brand:'ltw', q:'q1', t:'Assign a tracked number to the monthly restoration letter', due:null, made:'2026-08-02' },
+  { id:'t4', brand:'ltw', q:'q2', t:'Proof the chink and seal mailer with Send Jim', due:'2026-08-24', made:'2026-08-11' },
+  { id:'t9', brand:'me', q:'q2', t:'Renew the trailer registration', due:'2026-08-20', made:'2026-08-15' },
+  { id:'t5', brand:'sq', q:'q2', t:'Fall route yard signs, order the second batch', due:'2026-09-01', made:'2026-08-12' },
+  { id:'t7', brand:'ltw', q:'q3', t:'Cut the second Second Act episode', due:null, made:'2026-08-07' },
+  { id:'t8', brand:'sq', q:'q3', t:'Rewrite the roof wash retargeting copy, it is flat', due:null, made:'2026-08-13' },
+  { id:'t13', brand:'ltw', q:'q3', t:'Storyboard the Three Threats explainer', due:null, made:'2026-08-14' },
+  { id:'t6', brand:'me', q:'q4', t:'Back up the travel photos off the phone', due:null, made:'2026-07-22' },
+  { id:'t14', brand:'sq', q:'q4', t:'Look at the joint branding demo Dan sent', due:null, made:'2026-08-05' },
+  { id:'t10', brand:'ltw', q:'q1', done:1, t:'August reactivation postcard out the door', due:null, made:'2026-08-01' },
+  { id:'t11', brand:'sq', q:'q2', done:1, t:'Pre-fall gutter email scheduled in Constant Contact', due:null, made:'2026-08-06' },
+  { id:'t12', brand:'me', q:'q4', done:1, t:'Update the portfolio bio', due:null, made:'2026-08-10' },
+];
+/* older saves used col + pri; fold them into quadrants once */
+function migrate(rows) {
+  return rows.map(t => t.q ? t : ({ ...t, q: t.pri === 'urgent' ? 'q1' : t.pri === 'high' ? (t.col === 'doing' ? 'q2' : 'q3') : 'q4',
+    done: t.col === 'done' ? 1 : 0, col:undefined, pri:undefined }));
+}
+const load = () => { try { const r = JSON.parse(localStorage.getItem(KEY)); return r && r.length ? migrate(r) : SEED; } catch (e) { return SEED; } };
+const save = v => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} };
+let tasks = load(), show = { ltw:1, sq:1, me:1 }, addBrand = 'ltw';
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const days = (a, b) => Math.round(((b instanceof Date ? b : ymd(b)) - (a instanceof Date ? a : ymd(a))) / 864e5);
+/* Rank inside a column. Older saves had no rank, so fall back to due date once
+   and write ranks the first time a column is touched. */
+function rank(t) {
+  if (typeof t.rank === 'number') return t.rank;
+  return 1000 + (t.due ? days(TODAY, t.due) : 999);
+}
+function reindex(q) {
+  tasks.filter(t => t.q === q && !t.done).sort((a, b) => rank(a) - rank(b)).forEach((t, i) => { t.rank = i; });
+}
+function when(t) {
+  if (t.due) {
+    const d = days(TODAY, t.due);
+    if (d < 0) return { txt:Math.abs(d) + 'd late', cls:'late' };
+    if (d === 0) return { txt:'today', cls:'late' };
+    if (d <= 4) return { txt:'in ' + d + 'd', cls:'soon' };
+    return { txt:ymd(t.due).toLocaleDateString('en-US',{month:'short',day:'numeric'}), cls:'' };
+  }
+  return { txt:days(t.made, TODAY) + 'd old', cls:'' };
+}
+function render() {
+  const vis = tasks.filter(t => show[t.brand]);
+  document.getElementById('board').innerHTML = QUADS.map(([q, label, axis]) => {
+    const rows = vis.filter(t => t.q === q && !t.done).sort((a, b) => rank(a) - rank(b));
+    return `<section class="col ${q}" data-q="${q}">
+      <div class="colhead">
+        <div class="colline"><h2>${label}</h2><span class="n">${rows.length}</span><span class="hint">Drop here</span></div>
+        <span class="axis">${axis}</span>
+      </div>
+      <div class="rail"></div>
+      <div class="list">
+        ${rows.map(t => { const w = when(t); return `<div class="task" draggable="true" data-id="${t.id}" title="Click to clear, drag to reorder or move column">
+          <span class="dot ${t.brand}" title="${BR[t.brand]}"></span>
+          <span class="t">${esc(t.t)}</span>
+          <span class="when ${w.cls}">${w.txt}</span>
+        </div>`; }).join('') || `<p class="empty">Nothing here.</p>`}
+        <div class="add">
+          <span class="pick">${Object.keys(BR).map(k => `<button data-ab="${k}" aria-pressed="${addBrand === k}" title="${BR[k]}"><span class="dot ${k}"></span></button>`).join('')}</span>
+          <input data-new="${q}" placeholder="Add${q === 'q1' ? ' something urgent' : q === 'q4' ? ' for later' : ''}…" aria-label="New task in ${label}">
+        </div>
+      </div>
+    </section>`;
+  }).join('');
+  const done = vis.filter(t => t.done);
+  document.getElementById('clist').innerHTML = done.length
+    ? done.map(t => `<button data-undo="${t.id}" title="Put it back"><span class="dot ${t.brand}"></span><span class="t">${esc(t.t)}</span></button>`).join('')
+    : '<p class="empty">Nothing cleared yet.</p>';
+  document.getElementById('cn').textContent = done.length ? done.length + ' this month' : '';
+  const open = vis.filter(t => !t.done);
+  document.getElementById('tally').innerHTML = `<span>Now<b class="hot">${open.filter(t => t.q === 'q1').length}</b></span>`
+    + `<span>Open<b>${open.length}</b></span>`
+    + `<span>Late<b>${open.filter(t => t.due && days(TODAY, t.due) < 0).length}</b></span>`;
+  wire();
+}
+function wire() {
+  document.querySelectorAll('.task').forEach(el => {
+    el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.id); el.classList.add('dragging'); });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    el.addEventListener('click', () => { const t = tasks.find(x => x.id === el.dataset.id); t.done = 1; save(tasks); render(); });
+  });
+  document.querySelectorAll('.col').forEach(col => {
+    const list = col.querySelector('.list');
+    const marker = () => { const m = list.querySelector('.gap'); if (m) m.remove(); };
+    col.addEventListener('dragover', e => {
+      e.preventDefault(); col.classList.add('over');
+      const rows = [...list.querySelectorAll('.task:not(.dragging)')];
+      marker();
+      const el = document.createElement('div'); el.className = 'gap';
+      const after = rows.find(r => { const b = r.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
+      if (after) list.insertBefore(el, after);
+      else list.insertBefore(el, list.querySelector('.add'));
+    });
+    col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) { col.classList.remove('over'); marker(); } });
+    col.addEventListener('drop', e => {
+      e.preventDefault(); col.classList.remove('over');
+      const t = tasks.find(x => x.id === e.dataTransfer.getData('text/plain'));
+      if (!t) { marker(); return; }
+      const q = col.dataset.q;
+      // where the gap landed becomes the new rank
+      const gap = list.querySelector('.gap');
+      const above = gap ? [...list.querySelectorAll('.task:not(.dragging)')].filter(r => r.compareDocumentPosition(gap) & Node.DOCUMENT_POSITION_FOLLOWING) : [];
+      marker();
+      if (t.q !== q) { t.q = q; }
+      t.done = 0;
+      reindex(q);
+      const prev = above.length ? tasks.find(x => x.id === above[above.length - 1].dataset.id) : null;
+      t.rank = prev ? prev.rank + .5 : -.5;
+      reindex(q);
+      save(tasks); render();
+    });
+  });
+  document.querySelectorAll('[data-undo]').forEach(b => b.onclick = () => {
+    const t = tasks.find(x => x.id === b.dataset.undo); t.done = 0; save(tasks); render();
+  });
+  document.querySelectorAll('[data-ab]').forEach(b => b.onclick = () => {
+    addBrand = b.dataset.ab;
+    document.querySelectorAll('[data-ab]').forEach(x => x.setAttribute('aria-pressed', x.dataset.ab === addBrand));
+  });
+  document.querySelectorAll('[data-new]').forEach(inp => inp.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const v = inp.value.trim(); if (!v) return;
+    const q = inp.dataset.new;
+    reindex(q);
+    tasks.unshift({ id:'t' + Date.now().toString(36), brand:addBrand, q, t:v, due:null, made:TODAY.toISOString().slice(0,10), rank:-1 });
+    reindex(q);
+    save(tasks); render();
+    const next = document.querySelector(`[data-new="${inp.dataset.new}"]`); if (next) next.focus();
+  }));
+}
+document.querySelectorAll('#filter button').forEach(b => b.onclick = () => {
+  show[b.dataset.b] = !show[b.dataset.b];
+  b.setAttribute('aria-pressed', show[b.dataset.b]);
+  render();
+});
+render();
+</script>
+<script src="mode.js"></script>
+<script src="nav-fade.js"></script>
+</body>
+</html>

@@ -182,6 +182,7 @@ body.mem-open .mem{display:block}
   </div>
 </div>
 
+<script src="claude-client.js"></script>
 <script src="mcc-data.js"></script>
 <script src="wick-brain.js"></script>
 <script>
@@ -225,8 +226,8 @@ async function turn(text) {
   let reply, did = '';
   try { reply = await wickSay(history); setState('answering'); }
   catch (e) {
-    reply = e.message === 'offline'
-      ? "I'm not connected to the model in this view, so I can't think out loud here, the data's loaded and the actions still work. Open me from the running app and I'll answer properly."
+    reply = /not configured|misconfigured/i.test(e.message || '')
+      ? "I'm not wired to the model on this box yet, nothing's configured server-side. The data's loaded and the actions still work, add an API key and I'll answer for real."
       : "That call failed and I'm not going to guess at numbers. Try again in a moment.";
   }
   pulse(false);

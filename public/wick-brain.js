@@ -107,6 +107,20 @@ const WICK_TOOLS = [
   { name:'remember', description:'Store something worth carrying into future sessions: a decision, a preference, a result, a pattern.',
     input_schema:{ type:'object', properties:{ topic:{type:'string'}, summary:{type:'string'}, related_brand:{type:'string'} }, required:['topic','summary'] },
     run: async i => { wickRemember(i.topic, i.summary, i.related_brand); return 'Filed.'; } },
+  { name:'find_job_photos', description:'Search CompanyCam for job photos by client name, project name, or address. Use this when Carter asks if a client has good pictures, or wants specific job photos surfaced.',
+    input_schema:{ type:'object', properties:{ query:{type:'string', description:'Client name, project name, or address to search for'} }, required:['query'] },
+    run: async i => {
+      let body;
+      try {
+        const res = await fetch('/api/companycam/search?q=' + encodeURIComponent(i.query));
+        body = await res.json();
+        if (!res.ok) return `CompanyCam search failed: ${body.error || res.status}`;
+      } catch (e) { return `CompanyCam search failed: ${e.message}`; }
+      if (!body.matches.length) return `No CompanyCam project matched "${i.query}".`;
+      if (!body.photos.length) return `Matched ${body.matches.join(', ')} in CompanyCam but no photos came back for it.`;
+      return `Matched: ${body.matches.join(', ')}. Photos, newest first:\n`
+        + body.photos.map(p => `- ${p.project}, ${p.capturedAt ? p.capturedAt.slice(0, 10) : 'date unknown'}: ${p.url || 'no URL on this one'}`).join('\n');
+    } },
 ];
 function wickRemember(topic, summary, related_brand) {
   const rows = jget(WICK_KEYS.memory);
@@ -152,8 +166,12 @@ function wickOpener() {
 }
 
 /* ── the call ──────────────────────────────────────────────────────── */
+/* Tools read and write the user's own localStorage, so they have to run in
+   the browser: the loop below calls the model, executes any tool_use blocks
+   itself, and feeds the results back, rather than handing the whole thing to
+   the server (which never sees the tool implementations at all). */
+const WICK_MAX_TURNS = 6;
 async function wickSay(history) {
-  if (!window.claude?.complete) throw new Error('offline');
   const system = `${WICK_PERSONA}
 
 BRAND GUIDES:
@@ -164,8 +182,24 @@ ${liveSnapshot()}
 
 WHAT YOU REMEMBER FROM PAST SESSIONS:
 ${memoryDigest()}`;
-  return await window.claude.complete({ model:'claude-sonnet-4-5', max_tokens:900, system, tools:WICK_TOOLS,
-    messages:history.map(m => ({ role:m.role, content:m.text })) });
+  const tools = WICK_TOOLS.map(({ name, description, input_schema }) => ({ name, description, input_schema }));
+  let messages = history.map(m => ({ role:m.role, content:m.text }));
+  for (let turn = 0; turn < WICK_MAX_TURNS; turn++) {
+    const resp = await window.claude.complete({ max_tokens:900, system, tools, messages });
+    const toolUses = (resp.content || []).filter(b => b.type === 'tool_use');
+    if (!toolUses.length) return window.claudeTextOf(resp);
+    messages = messages.concat([{ role:'assistant', content:resp.content }]);
+    const results = [];
+    for (const call of toolUses) {
+      const tool = WICK_TOOLS.find(t => t.name === call.name);
+      let content;
+      try { content = tool ? await tool.run(call.input || {}) : `Unknown tool: ${call.name}`; }
+      catch (e) { content = `Tool failed: ${e.message}`; }
+      results.push({ type:'tool_result', tool_use_id:call.id, content:String(content) });
+    }
+    messages = messages.concat([{ role:'user', content:results }]);
+  }
+  return "That took more steps than I'm allowed in one turn. Ask again, more narrowly.";
 }
 /* Session close: distil the thread into memory rows rather than dumping the transcript. */
 async function wickCloseSession(history) {
@@ -175,9 +209,10 @@ async function wickCloseSession(history) {
   jput(WICK_KEYS.sessions, sessions.slice(-100));
   if (!window.claude?.complete) return;
   try {
-    const out = await window.claude.complete({ max_tokens:500,
+    const resp = await window.claude.complete({ max_tokens:500,
       system:'Distil this working conversation into at most four memory rows. Reply with JSON only: [{"topic":"short label","summary":"one sentence worth remembering months from now","related_brand":"ltw|sq|null"}]. Keep decisions, preferences, results and disagreements. Drop pleasantries and anything already obvious from the data.',
       messages:[{ role:'user', content:history.map(m => `${m.role === 'user' ? 'Carter' : 'Wick'}: ${m.text}`).join('\n\n') }] });
+    const out = window.claudeTextOf(resp);
     (JSON.parse(out.slice(out.indexOf('['), out.lastIndexOf(']') + 1)) || []).forEach(r => wickRemember(r.topic, r.summary, r.related_brand === 'null' ? null : r.related_brand));
   } catch (e) {}
 }

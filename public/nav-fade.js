@@ -3,7 +3,7 @@
    in lifts into place over the same backdrop, so the two reads as one move.
    Only pages listed in ROOMS get it; anything else navigates normally. */
 (() => {
-  const ROOMS = ['marketing command center.html', 'the docket.html', 'wick.html', 'business hub.html', 'scaffold hub.html'];
+  const ROOMS = ['marketing command center.html', 'the docket.html', 'wick.html'];
   const file = s => decodeURIComponent(String(s).split('?')[0].split('#')[0].split('/').pop() || '').toLowerCase();
   const slow = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (slow) return;

@@ -84,23 +84,111 @@ function chanBars(p) {
 }
 const chanPairs = p => p.rows.map(([k, v]) => `<div class="vrow"><span class="lbl">${esc(k)}</span><span class="mono">${esc(v)}</span></div>`).join('');
 const chanNotes = p => p.rows.map(t => `<p class="sub" style="margin-bottom:12px">${esc(t)}</p>`).join('');
+
+/* ── CallRail: live, replacing the sample kpis/panels once fetched ──────── */
+let CALLRAIL_LIVE = { status: 'idle', data: null, error: null };
+async function loadCallrailLive() {
+  if (CALLRAIL_LIVE.status === 'loading') return;
+  CALLRAIL_LIVE = { status: 'loading', data: null, error: null };
+  try {
+    const res = await fetch('/api/callrail/summary');
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `CallRail request failed (${res.status})`);
+    CALLRAIL_LIVE = { status: 'ready', data: body, error: null };
+  } catch (e) {
+    CALLRAIL_LIVE = { status: 'error', data: null, error: e.message };
+  }
+  rerenderMCC();
+}
+// Correlates a raw tracked number back to the campaign that owns it, the same
+// way the campaign log records CallRail attribution ("CallRail · (540) ...").
+function callrailNumberLabel(rawNumber) {
+  const digits = String(rawNumber).replace(/\D/g, '').slice(-10);
+  const match = digits && CAMPAIGNS.find(c => /CallRail/i.test(c.attribution || '')
+    && String(c.attribution).replace(/\D/g, '').slice(-10) === digits);
+  return match ? [`${rawNumber} · ${match.name}`, match.brand] : [rawNumber];
+}
+function callrailKpis(sum) {
+  return [['Calls', sum.total], ['Answered', sum.answered], ['Missed', sum.missed], ['First time', sum.firstTime], ['Avg. length', sum.avgLength]];
+}
+function callrailPanels(sum) {
+  return [
+    { title: 'Calls by tracked number', kind: 'bars', unit: 'plain', rows: sum.byNumber.slice(0, 8).map(([num, count]) => {
+      const [label, brand] = callrailNumberLabel(num);
+      return brand ? [label, count, brand] : [label, count];
+    }) },
+    { title: 'Handling', kind: 'pairs', rows: [
+      ['Answered inside 30s', sum.answeredInside30], ['Voicemail left', sum.voicemail],
+      ['Missed, no voicemail', sum.missedNoVoicemail], ['Repeat callers', sum.repeatCallers], ['Calls after 6pm', sum.after6pm],
+    ] },
+    CHANNEL_DETAIL.callrail.panels[2],
+  ];
+}
+
+/* ── Constant Contact: sends/opens/clicks live; list health stays sample
+   until a contact-lists call is worth adding ─────────────────────────── */
+let CC_LIVE = { status: 'idle', data: null, error: null };
+async function loadConstantContactLive() {
+  if (CC_LIVE.status === 'loading') return;
+  CC_LIVE = { status: 'loading', data: null, error: null };
+  try {
+    const res = await fetch('/api/constantcontact/summary');
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `Constant Contact request failed (${res.status})`);
+    CC_LIVE = { status: 'ready', data: body, error: null };
+  } catch (e) {
+    CC_LIVE = { status: 'error', data: null, error: e.message };
+  }
+  rerenderMCC();
+}
+function ccSendLabel(name) {
+  const match = CAMPAIGNS.find(c => c.channel === 'Email' && (c.name.includes(name) || name.includes(c.name)));
+  return match ? [name, match.brand] : [name];
+}
+function ccKpis(sum, spend, leads) {
+  const rate = n => sum.sends ? Math.round(n / sum.sends * 100) + '%' : '0%';
+  return [['Spend', money(spend)], ['Sends', sum.sends], ['Opens', rate(sum.opens)], ['Clicks', rate(sum.clicks)], ['Leads', leads]];
+}
+function ccPanels(sum) {
+  return [
+    { title: 'By send', kind: 'bars', unit: 'plain', rows: sum.byName.slice(0, 8).map(([name, opens]) => {
+      const [label, brand] = ccSendLabel(name);
+      return brand ? [label, opens, brand] : [label, opens];
+    }) },
+    CHANNEL_DETAIL.constantcontact.panels[1],
+    CHANNEL_DETAIL.constantcontact.panels[2],
+  ];
+}
 function screenChannel(s) {
   const d = CHANNEL_DETAIL[s.chan] || CHANNEL_DETAIL.adwords;
   const rows = CAMPAIGNS.filter(c => c.status !== 'draft' && d.match(c));
   const spend = rows.reduce((a, c) => a + (c.cost || 0), 0), leads = rows.reduce((a, c) => a + (c.leads || 0), 0);
   const body = p => p.kind === 'bars' ? `<div class="minirows">${chanBars(p)}</div>`
     : p.kind === 'pairs' ? `<div class="vrows">${chanPairs(p)}</div>` : chanNotes(p);
+  let kpis = d.kpis, panels = d.panels, livePill = '';
+  if (s.chan === 'callrail') {
+    if (CALLRAIL_LIVE.status === 'idle') loadCallrailLive();
+    if (CALLRAIL_LIVE.status === 'ready') { kpis = callrailKpis(CALLRAIL_LIVE.data); panels = callrailPanels(CALLRAIL_LIVE.data); livePill = '<span class="pill ok">Live · CallRail</span>'; }
+    else if (CALLRAIL_LIVE.status === 'loading') livePill = '<span class="pill mute">Live · loading…</span>';
+    else if (CALLRAIL_LIVE.status === 'error') livePill = `<span class="pill bad" title="${esc(CALLRAIL_LIVE.error)}">Live call failed</span>`;
+  }
+  if (s.chan === 'constantcontact') {
+    if (CC_LIVE.status === 'idle') loadConstantContactLive();
+    if (CC_LIVE.status === 'ready') { kpis = ccKpis(CC_LIVE.data, spend, leads); panels = ccPanels(CC_LIVE.data); livePill = '<span class="pill ok">Live · Constant Contact</span>'; }
+    else if (CC_LIVE.status === 'loading') livePill = '<span class="pill mute">Live · loading…</span>';
+    else if (CC_LIVE.status === 'error') livePill = `<span class="pill bad" title="${esc(CC_LIVE.error)}">Live call failed</span>`;
+  }
   return `<div class="stack">
     <div class="chanhead">
       <button class="btn quiet sm" data-go="home" style="margin-left:-12px">← Home</button>
       <h1 class="h1" style="font-size:30px;margin-top:6px">${esc(d.name)}</h1>
       <p class="sub" style="margin-top:8px;max-width:620px">${esc(d.lede)}</p>
       <div class="row" style="gap:10px;margin-top:12px;flex-wrap:wrap"><span class="pill mute">One ${esc(d.label)} account · both brands</span>
-        <span class="lbl">Brand dots mark which side each row belongs to</span></div>
+        <span class="lbl">Brand dots mark which side each row belongs to</span>${livePill}</div>
       <div class="chantabs">${Object.entries(CHANNEL_DETAIL).map(([k, v]) => `<button class="chantab" data-channel="${k}" aria-current="${k === s.chan}">${esc(v.name)}</button>`).join('')}</div>
     </div>
-    <div class="kpis">${d.kpis.map(([l, v]) => `<div class="kpi"><div class="lbl">${l}</div><div class="mono kpin">${v}</div></div>`).join('')}</div>
-    <div class="changrid">${d.panels.map(p => `<section class="tile">
+    <div class="kpis">${kpis.map(([l, v]) => `<div class="kpi"><div class="lbl">${l}</div><div class="mono kpin">${v}</div></div>`).join('')}</div>
+    <div class="changrid">${panels.map(p => `<section class="tile">
       <div class="tilehead"><h2 class="h2">${esc(p.title)}</h2></div>${body(p)}
     </section>`).join('')}</div>
     <section class="card">

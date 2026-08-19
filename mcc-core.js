@@ -28,7 +28,7 @@ function dial(b, zero) {
   const tip = at(frac, R - 4), hub = { x:84, y:80 };
   const ahead = hasGoal && frac >= pace;
   return `<div class="dial">
-    <svg viewBox="0 0 168 94" width="100%" height="auto" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <svg viewBox="0 0 168 94" width="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <path d="M16 80a68 68 0 01136 0" fill="none" stroke="var(--line-2)" stroke-width="9" stroke-linecap="butt"/>
       ${hasGoal && frac > 0 ? `<path d="M16 80a68 68 0 01136 0" fill="none" stroke="var(--${b})" stroke-width="9" stroke-linecap="butt"
         stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}"/>` : ''}
